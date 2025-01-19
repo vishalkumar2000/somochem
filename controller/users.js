@@ -194,6 +194,36 @@ const uploadFile = async (req, res) => {
     }
 };
 
+const getAllDataByBrand = async (req, res) => {
+    try {
+        // SQL query to aggregate data by brand
+        const query = `SELECT 
+                brand, 
+                SUM(billing_qty) AS total_billing_qty, 
+                SUM(net_value_gcurr) AS total_sales, 
+                COUNT(*) AS total_entries
+            FROM billing_data
+            GROUP BY brand
+            ORDER BY brand`;
+
+        // Execute the query
+        const result = await PGSQL.query(query);
+
+        // Check if any data is retrieved
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "No data available for aggregation." });
+        }
+
+        // Send the aggregated data in the response
+        res.json({
+            message: "Aggregated data retrieved successfully.",
+            data: result.rows, // Each row corresponds to a brand with aggregated totals
+        });
+    } catch (error) {
+        res.status(500).json({ message: `Error retrieving aggregated data: ${error.message}` });
+    }
+};
+
 
 // Function to convert Excel serial date to JavaScript Date
 const excelDateToJSDate = (serial) => {
@@ -201,4 +231,4 @@ const excelDateToJSDate = (serial) => {
     const millisecondsPerDay = 86400000;  // Number of milliseconds in a day
     return new Date(epoch.getTime() + serial * millisecondsPerDay);
 };
-module.exports = { getAlluser, getUserByID, addUser, updateUserByID, deleteUserByID, uploadFile }
+module.exports = { getAlluser, getUserByID, addUser, updateUserByID, deleteUserByID, uploadFile, getAllDataByBrand }
